@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rancher/catalog-service/parse"
 	"github.com/rancher/go-rancher/catalog"
 
 	log "github.com/Sirupsen/logrus"
@@ -299,7 +298,7 @@ func getTemplateLatestVersion(config *model.StackUpgrade, externalId string) (st
 	retRev := 0
 	for _, v := range tempObj.UpgradeVersionLinks {
 		extId := v.(string)[strings.LastIndex(v.(string), "/")+1:]
-		_, _, _, Rev, _ := parse.TemplateURLPath(extId)
+		_, _, _, Rev, _ := TemplateURLPath(extId)
 		RevI, err := strconv.Atoi(Rev)
 		if err != nil {
 			return "", err
@@ -368,5 +367,44 @@ func waitStack(apiClient *client.RancherClient, stack *client.Stack) error {
 		return nil
 	default:
 		return fmt.Errorf("Waiting for %s failed: %s", stack.Id, stack.TransitioningMessage)
+	}
+}
+
+func TemplateURLPath(path string) (string, string, string, string, bool) {
+	pathSplit := strings.Split(path, ":")
+	switch len(pathSplit) {
+	case 2:
+		catalog := pathSplit[0]
+		template := pathSplit[1]
+		templateSplit := strings.Split(template, "*")
+		templateBase := ""
+		switch len(templateSplit) {
+		case 1:
+			template = templateSplit[0]
+		case 2:
+			templateBase = templateSplit[0]
+			template = templateSplit[1]
+		default:
+			return "", "", "", "", false
+		}
+		return catalog, template, templateBase, "", true
+	case 3:
+		catalog := pathSplit[0]
+		template := pathSplit[1]
+		revisionOrVersion := pathSplit[2]
+		templateSplit := strings.Split(template, "*")
+		templateBase := ""
+		switch len(templateSplit) {
+		case 1:
+			template = templateSplit[0]
+		case 2:
+			templateBase = templateSplit[0]
+			template = templateSplit[1]
+		default:
+			return "", "", "", "", false
+		}
+		return catalog, template, templateBase, revisionOrVersion, true
+	default:
+		return "", "", "", "", false
 	}
 }

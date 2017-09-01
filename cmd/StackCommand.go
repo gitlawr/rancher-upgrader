@@ -1,6 +1,11 @@
 package cmd
 
 import (
+	"bufio"
+	"os"
+	"strings"
+
+	"github.com/Sirupsen/logrus"
 	"github.com/rancher/rancher-upgrader/model"
 	"github.com/rancher/rancher-upgrader/service"
 	"github.com/urfave/cli"
@@ -56,13 +61,44 @@ func StackCommand() cli.Command {
 func upgradeStack(ctx *cli.Context) error {
 	factory := ClientFactory{}
 	apiClient, _ := factory.GetClient(ctx)
+
+	var envs map[string]interface{}
+	if ctx.String("env-file") != "" {
+		envs = parseCustomEnvFile(ctx.String("env-file"))
+	}
 	config := &model.StackUpgrade{
 		CattleUrl:       ctx.String("envurl"),
 		AccessKey:       ctx.String("accesskey"),
 		SecretKey:       ctx.String("secretkey"),
 		StackName:       ctx.String("stackname"),
+		Environment:     envs,
 		ToLatestCatalog: ctx.Bool("tolatest"),
 	}
 	service.UpgradeStack(apiClient, config)
 	return nil
+}
+
+func parseCustomEnvFile(file string) map[string]interface{} {
+	variables := map[string]interface{}{}
+
+	f, err := os.Open(file)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		t := scanner.Text()
+		parts := strings.SplitN(t, "=", 2)
+		if len(parts) == 1 {
+			variables[parts[0]] = ""
+		} else {
+			variables[parts[0]] = parts[1]
+		}
+	}
+
+	if scanner.Err() != nil {
+		logrus.Fatal(scanner.Err())
+	}
+
+	return variables
 }
