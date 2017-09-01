@@ -17,14 +17,15 @@ type RancherClientFactory interface {
 type ClientFactory struct{}
 
 func (f *ClientFactory) GetClient(ctx *cli.Context) (*client.RancherClient, error) {
-	cattleURL := ctx.GlobalString("url")
-	projectID := ctx.String("env")
-	url := fmt.Sprintf("%s/projects/%s/schemas", cattleURL, projectID)
+	envEndpoint := ctx.String("envurl")
+	//projectID := ctx.String("env")
+	//url := fmt.Sprintf("%s/projects/%s/schemas", cattleURL, projectID)
+	url := envEndpoint + "/schemas"
 	apiClient, err := client.NewRancherClient(&client.ClientOpts{
 		Timeout:   time.Second * 30,
 		Url:       url,
-		AccessKey: ctx.GlobalString("access-key"),
-		SecretKey: ctx.GlobalString("secret-key"),
+		AccessKey: ctx.String("accesskey"),
+		SecretKey: ctx.String("secretkey"),
 	})
 	if err != nil {
 		logrus.Fatal(err)

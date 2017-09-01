@@ -30,25 +30,12 @@ func main() {
 			Name:  "debug",
 			Usage: "Debug logging",
 		},
-		cli.StringFlag{
-			Name:   "url",
-			Usage:  "Specify the Rancher API endpoint URL",
-			EnvVar: "CATTLE_URL",
-		},
-		cli.StringFlag{
-			Name:   "access-key",
-			Usage:  "Specify Rancher API access key",
-			EnvVar: "CATTLE_ACCESS_KEY",
-		},
-		cli.StringFlag{
-			Name:   "secret-key",
-			Usage:  "Specify Rancher API secret key",
-			EnvVar: "CATTLE_SECRET_KEY",
-		},
 	}
 
 	app.Commands = []cli.Command{
 		cmd.ServiceCommand(),
+		cmd.CatalogCommand(),
+		cmd.StackCommand(),
 	}
 
 	err := app.Run(os.Args)

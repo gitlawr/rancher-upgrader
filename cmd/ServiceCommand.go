@@ -12,9 +12,23 @@ import (
 func ServiceCommand() cli.Command {
 	serviceFlags := []cli.Flag{
 		cli.StringFlag{
-			Name:   "env",
-			Usage:  "Environment ID",
-			EnvVar: "ENVIRONMENT_ID",
+			Name:   "envurl",
+			Usage:  "Environment ENDPOINT URL",
+			EnvVar: "CATTLE_URL",
+		},
+		cli.StringFlag{
+			Name:   "accesskey",
+			Usage:  "Environment ACCESS KEY",
+			EnvVar: "CATTLE_ACCESS_KEY",
+		},
+		cli.StringFlag{
+			Name:   "secretkey",
+			Usage:  "Environment SECRET KEY",
+			EnvVar: "CATTLE_SECRET_KEY",
+		},
+		cli.StringFlag{
+			Name:  "image",
+			Usage: "image to use",
 		},
 		cli.StringSliceFlag{
 			Name:  "selector",
@@ -23,10 +37,12 @@ func ServiceCommand() cli.Command {
 		cli.IntFlag{
 			Name:  "batchsize",
 			Usage: "batch size",
+			Value: 1,
 		},
 		cli.IntFlag{
 			Name:  "interval",
 			Usage: "batch interval in seconds",
+			Value: 1,
 		},
 		cli.BoolFlag{
 			Name:  "startfirst",
@@ -50,13 +66,18 @@ func upgrade(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	batchSize := ctx.Int64("batchsize")
+	interval := ctx.Int64("interval")
+	startFirst := ctx.Bool("startfirst")
+	image := ctx.String("image")
+
 	config := &model.ServiceUpgrade{
 		ServiceSelector: svcSelectors,
-		BatchSize:       ctx.Int64("batchsize"),
-		IntervalMillis:  ctx.Int64("interval"),
-		StartFirst:      ctx.Bool("startfirst"),
+		BatchSize:       batchSize,
+		IntervalMillis:  interval,
+		StartFirst:      startFirst,
 	}
-	service.UpgradeServices(apiClient, config, "nginx:latest")
+	service.UpgradeServices(apiClient, config, image)
 	return nil
 }
 
